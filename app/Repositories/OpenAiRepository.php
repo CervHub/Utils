@@ -82,9 +82,12 @@ class OpenAiRepository
 
             // Filtrar valores nulos
             $textValues = array_filter($textValues);
+            $content = reset($textValues);
+            $content = str_replace(['```html', '```'], '', $content); // Eliminar etiquetas ```html y ```
+            $runThreadResponse['parsed_content'] = $content;
 
             // Devolver el primer valor de text
-            return reset($textValues);
+            return $content;
         } catch (\Exception $e) {
             return $this->handleErrorResponse($e->getMessage());
         }
