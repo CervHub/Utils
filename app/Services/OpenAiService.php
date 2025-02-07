@@ -34,6 +34,27 @@ class OpenAiService
         }
     }
 
+    public function checkMessage(Request $request)
+    {
+        try {
+            // Validar que el request tenga el campo 'message' y 'instructions'
+            $request->validate([
+                'message' => 'required|string',
+                'instructions' => 'required|string',
+            ]);
+
+            $message = $request->input('message');
+            $instructions = $request->input('instructions');
+            $response = $this->openAiRepository->checkMessage($message, $instructions);
+
+            // Devolver la respuesta en el campo 'message' con código de estado 200
+            return response()->json(['message' => $response], 200);
+        } catch (Exception $e) {
+            // Manejar la excepción y devolver una respuesta de error
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
     public function assistant(Request $request)
     {
         try {

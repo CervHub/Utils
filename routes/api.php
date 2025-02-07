@@ -30,4 +30,8 @@ Route::prefix('v1')->group(function () {
 
     // Nueva ruta para listar los threads en OpenAI
     Route::get('/openai/threads', [OpenAiService::class, 'listThreads'])->name('openai.listThreads');
+
+     // Nueva ruta para verificar si un mensaje es censurado
+    Route::post('/check-message', [MessageController::class, 'checkMessage'])->name('check.message');
+    });
 });

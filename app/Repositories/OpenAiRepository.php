@@ -46,6 +46,36 @@ class OpenAiRepository
         }
     }
 
+    public function checkMessage($message, $instructions)
+    {
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $this->apiKey,
+                'Content-Type' => 'application/json',
+            ])->post($this->url, [
+                'model' => 'gpt-4o-mini-2024-07-18',
+                'messages' => [
+                    [
+                        'role' => 'system',
+                        'content' => $instructions,
+                    ],
+                    [
+                        'role' => 'user',
+                        'content' => $message,
+                    ],
+                ],
+            ]);
+
+            if ($response->successful()) {
+                return $response->json()['choices'][0]['message']['content'];
+            } else {
+                return $this->handleErrorResponse();
+            }
+        } catch (\Exception $e) {
+            return $this->handleErrorResponse($e->getMessage());
+        }
+    }
+
     public function assistant($message, $threadId)
     {
         try {
