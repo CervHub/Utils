@@ -33,5 +33,5 @@ Route::prefix('v1')->group(function () {
 
      // Nueva ruta para verificar si un mensaje es censurado
     Route::post('/check-message', [MessageController::class, 'checkMessage'])->name('check.message');
-    });
+    
 });
