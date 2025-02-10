@@ -11,12 +11,14 @@ class OpenAiRepository
 {
     private $apiKey;
     private $assistantId;
+    private $assistantCervId;
     private $url;
 
     public function __construct()
     {
         $this->apiKey = env('OPENAI_API_KEY');
         $this->assistantId = env('OPENAI_ASSISTANT_ID'); // Reemplaza con tu Assistant ID
+        $this->assistantCervId = env('OPENAI_ASSISTANT_CERV_ID'); // Reemplaza con tu Assistant ID
         $this->url = 'https://api.openai.com/v1/chat/completions';
     }
 
@@ -87,7 +89,54 @@ class OpenAiRepository
             }
 
             // Ejecutar el thread
-            $runThreadResponse = $this->runThread($threadId);
+            $runThreadResponse = $this->runThread($threadId, $this->assistantId);
+
+            if (isset($runThreadResponse['error'])) {
+                return $this->handleErrorResponse($runThreadResponse['error']);
+            }
+
+            // Filtrar las respuestas que cumplan con los criterios
+            $filteredResponses = array_filter($runThreadResponse, function ($item) {
+                return isset($item['object']) && $item['object'] === 'thread.message' && isset($item['status']) && $item['status'] === 'completed';
+            });
+
+            // Extraer los valores de item.text.value
+            $textValues = array_map(function ($item) {
+                if (isset($item['content']) && is_array($item['content'])) {
+                    foreach ($item['content'] as $content) {
+                        if (isset($content['type']) && $content['type'] === 'text' && isset($content['text']['value'])) {
+                            return $content['text']['value'];
+                        }
+                    }
+                }
+                return null;
+            }, $filteredResponses);
+
+            // Filtrar valores nulos
+            $textValues = array_filter($textValues);
+            $content = reset($textValues);
+            $content = str_replace(['```html', '```'], '', $content); // Eliminar etiquetas ```html y ```
+            $runThreadResponse['parsed_content'] = $content;
+
+            // Devolver el primer valor de text
+            return $content;
+        } catch (\Exception $e) {
+            return $this->handleErrorResponse($e->getMessage());
+        }
+    }
+
+    public function cervChat($message, $threadId)
+    {
+        try {
+            // Agregar el mensaje al thread
+            $addMessageResponse = $this->addMessage($threadId, $message);
+
+            if (isset($addMessageResponse['error'])) {
+                return $this->handleErrorResponse($addMessageResponse['error']);
+            }
+
+            // Ejecutar el thread
+            $runThreadResponse = $this->runThread($threadId, $this->assistantCervId);
 
             if (isset($runThreadResponse['error'])) {
                 return $this->handleErrorResponse($runThreadResponse['error']);
@@ -238,9 +287,7 @@ class OpenAiRepository
         }
     }
 
-
-
-    public function runThread($threadId)
+    public function runThread($threadId, $assistantId)
     {
         $client = new Client();
         $events = [];
@@ -253,7 +300,7 @@ class OpenAiRepository
                     'OpenAI-Beta' => 'assistants=v2',
                 ],
                 'json' => [
-                    'assistant_id' => $this->assistantId,
+                    'assistant_id' => $assistantId,
                     'stream' => true
                 ],
                 'stream' => true,

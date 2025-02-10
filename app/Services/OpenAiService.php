@@ -76,6 +76,27 @@ class OpenAiService
         }
     }
 
+    public function cervChat(Request $request)
+    {
+        try {
+            // Validar que el request tenga el campo 'message'
+            $request->validate([
+                'message' => 'required|string',
+                'thread_id' => 'nullable|string'
+            ]);
+
+            $message = $request->input('message');
+            $threadId = $request->input('thread_id');
+            $response = $this->openAiRepository->cervChat($message, $threadId);
+
+            // Devolver la respuesta en el campo 'message' con código de estado 200
+            return response()->json(['message' => $response], 200);
+        } catch (Exception $e) {
+            // Manejar la excepción y devolver una respuesta de error
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
     public function listAssistants(Request $request)
     {
         try {

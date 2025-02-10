@@ -31,7 +31,9 @@ Route::prefix('v1')->group(function () {
     // Nueva ruta para listar los threads en OpenAI
     Route::get('/openai/threads', [OpenAiService::class, 'listThreads'])->name('openai.listThreads');
 
-     // Nueva ruta para verificar si un mensaje es censurado
+    // Nueva ruta para verificar si un mensaje es censurado
     Route::post('/check-message', [OpenAiService::class, 'checkMessage'])->name('check.message');
 
+    // Nueva ruta para obtener un chat libre de ayuda para la empresa CERV
+    Route::post('/cerv-chat', [OpenAiService::class, 'cervChat'])->name('cerv.chat');
 });
